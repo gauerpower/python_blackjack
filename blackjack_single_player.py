@@ -1,13 +1,12 @@
 # Features to think about adding:
 # Make a betting pot
-# Make multiplayer possible (with player names)
 
 import random
 import os
 
 cards = [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, "Ace", "Ace", "Ace", "Ace", "Jack", "Jack", "Jack", "Jack", "Queen", "Queen", "Queen", "Queen", "King", "King", "King", "King"]
 
-def play_blackjack():
+def play_blackjack_single():
     os.system('clear')
     print("\nWelcome to Blackjack. Aces are both high and low.")
     def deal_card():
@@ -26,7 +25,6 @@ def play_blackjack():
                 numeric_cards.append(11)
         return numeric_cards
 
-
     def calculate_score(card_list):
         numeric_cards = convert_face_cards(card_list)
         hand_total = sum(numeric_cards)
@@ -44,7 +42,7 @@ def play_blackjack():
     def play_again():
         answer = input("\nWould you like to play again? Y or N: ").lower()
         if answer == 'y':
-            play_blackjack()
+            play_blackjack_single()
         elif answer == 'n':
             print("\nGoodbye\n")
             quit()
@@ -107,4 +105,4 @@ def play_blackjack():
         display_score()
         check_for_blackjack()
 
-play_blackjack()
+play_blackjack_single()
