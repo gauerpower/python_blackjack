@@ -18,7 +18,7 @@ def play_blackjack():
         return hand_total
     
     def display_score():
-        print(f"\nPlayer's hand is {user_cards}. Computer has {len(computer_cards)} cards.")
+        print(f"\nPlayer's hand is {user_cards}. Computer has {len(computer_cards)} cards, one of which is {computer_cards[0]}.")
 
     def play_again():
         answer = input("\nWould you like to play again? Y or N: ").lower()
