@@ -104,5 +104,3 @@ def play_blackjack_single():
             computer_cards.append(deal_card())
         display_score()
         check_for_blackjack()
-
-play_blackjack_single()
