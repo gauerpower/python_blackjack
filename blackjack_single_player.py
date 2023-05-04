@@ -1,6 +1,3 @@
-# Features to think about adding:
-# Make a betting pot
-
 import random
 import os
 
