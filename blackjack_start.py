@@ -1,7 +1,9 @@
 import blackjack_single_player
 import blackjack_multiplayer
+import os
 
 def start_game():
+    os.system('clear')
     print("\nWelcome to Blackjack. Aces are both high and low.")
     n = int(input("\nType '1' for single-player vs. computer, OR a number between 2-6 for multiplayer: "))
     if n == 1:
