@@ -1,6 +1,10 @@
 import random
 import os
 
+#2-player seems to be working fine. Check 3+ players.
+# In particular, make sure players sitting out a round works
+# and make sure players who hit $0 actually get deleted.
+
 cards = [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, "Ace", "Ace", "Ace", "Ace", "Jack", "Jack", "Jack", "Jack", "Queen", "Queen", "Queen", "Queen", "King", "King", "King", "King"]
 
 def set_starting_cash():
@@ -65,6 +69,9 @@ def play_blackjack_multi(players):
                     p['stand'] = True
                     p['bust'] = True
                     players.remove(p)
+                else:
+                    p['stand'] = False
+                    p['bust'] = False
             play_blackjack_multi(players)
         elif answer == 'n':
             print("\nFinal score was:")
@@ -90,6 +97,7 @@ def play_blackjack_multi(players):
         highest_score = 0
         highest_scorers = []
         for p in players:
+            p['score'] = calculate_score(convert_face_cards(p['hand']))
             if p['score'] > highest_score and p['bust'] == False and len(p['hand']) > 0:
                 highest_score = p['score']
         for p in players:
@@ -114,7 +122,7 @@ def play_blackjack_multi(players):
                 print(f"\n{p['name']} ran out of money and is out of the game.")
                 players.remove(p)
         if len(players) < 2:
-            print(f"Game over. {players[0]['name']} won with a total of ${players[0]['name']}.")
+            print(f"Game over. {players[0]['name']} won with a total of ${players[0]['cash']}.")
             quit()
         else:
             play_again()
@@ -170,7 +178,11 @@ def play_blackjack_multi(players):
                         p['score'] = calculate_score(convert_face_cards(p['hand']))
                         p = check_for_blackjack(p)
                         if p['bust'] == True:
-                            continue
+                            unbusted_players = [p for p in players if p['bust'] == False]
+                            if len(unbusted_players) < 2:
+                                break
+                            else:
+                                continue
                     if hit_or_not == "n":
                         print(f"{p['name']} stands.")
                         p['stand'] = True
