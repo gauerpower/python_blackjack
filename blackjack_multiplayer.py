@@ -75,7 +75,9 @@ def play_blackjack_multi(players):
                 p['score'] = 0
             play_blackjack_multi(players)
         elif answer == 'n':
-            print("\nGoodbye\n")
+            print("\nFinal score was:")
+            for p in players:
+                print(f"{p['name']}: {p['cash']}")
             quit()
         else:
             print("\nInvalid input.")
@@ -87,7 +89,7 @@ def play_blackjack_multi(players):
             print(f"{player['name']} went over 21 and is out.")
             player['bust'] = True
             player['stand'] = True
-        print(f'Remaining players: {", ".join([p["name"] for p in players if (p["bust"] == False and p["stand"] == False)])}')
+        print(f'Remaining players: {", ".join([p["name"] for p in players if (p["bust"] == False)])}')
     
     def compare_scores():
         if all([p['stand'] for p in players]) == True:
@@ -100,6 +102,10 @@ def play_blackjack_multi(players):
         for p in players:
             if p['score'] == highest_score:
                 highest_scorers.append(p['name'])
+        if len(highest_scorers) == 0:
+            print("Nobody won this round. Pot split equally.")
+            for p in players:
+                p['cash'] += bet
         if len(highest_scorers) == 1:
             print(f"\n{highest_scorers[0]} won with a score of {highest_score} and takes ${total}.")
             for p in players:
@@ -144,7 +150,7 @@ def play_blackjack_multi(players):
     
     print(f"\nDealing cards...")
 
-    while (any([p['stand'] for p in players]) == False) and (any([p['bust'] for p in players]) == False):
+    while (all([p['stand'] for p in players]) == False) and len([p['bust'] for p in players if p['bust'] == False]) > 1:
         display_score()
         for p in players:
             if p['bust'] == False and len(p['hand']) > 0:
@@ -153,11 +159,14 @@ def play_blackjack_multi(players):
                     hit_or_not = input("Invalid input. Please enter Y or N: ")
                 if hit_or_not == "y":
                     new_card = deal_card()
-                    print(f"\nDealing {p['name']} a new card...\n\nYour new card is: {new_card}")
+                    print(f"\nDealing {p['name']} a new card...\n\n{p['name']}'s new card is: {new_card}")
                     p['hand'].append(new_card)
                     p['score'] = calculate_score(convert_face_cards(p['hand']))
                     check_for_blackjack(p)
+                    if p['bust'] == True:
+                        continue
                 if hit_or_not == "n":
+                    print(f"{p['name']} stands.")
                     p['stand'] = True
     
     compare_scores()
