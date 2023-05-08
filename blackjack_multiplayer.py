@@ -2,8 +2,8 @@ import random
 import os
 
 #2-player seems to be working fine. Check 3+ players.
-# In particular, make sure players sitting out a round works
-# and make sure players who hit $0 actually get deleted.
+# Using 'stand' attribute for sitting out a round isn't working so well.
+# Probably need to refactor so each player dict has a 'playing this round' attribute.
 
 cards = [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, "Ace", "Ace", "Ace", "Ace", "Jack", "Jack", "Jack", "Jack", "Queen", "Queen", "Queen", "Queen", "King", "King", "King", "King"]
 
@@ -52,35 +52,33 @@ def play_blackjack_multi(players):
             hand_total = sum(numeric_cards)
         return hand_total
     
-    def display_score():
-        for p in players:
-            if p['name'] == dealer:
-                print(f"\n{p['name']} (dealer) has {len(p['hand'])} cards, one of which is {p['hand'][0]}.")
-            elif len(p['hand']) > 0 :
+    def display_score(l):
+        for p in l:
                 print(f"\n{p['name']}'s hand is: {p['hand']}")
 
-    def play_again():
+    def play_again(l):
+        players_copy = l[:]
         answer = input("\nWould you like to play again? Y or N: ").lower()
         if answer == 'y':
-            for p in players:
+            for p in players_copy:
                 p['hand'] = []
                 p['score'] = 0
-                if p['cash'] <= 0.0:
+                if round(float(p['cash']), 2) <= 0.0:
                     p['stand'] = True
                     p['bust'] = True
-                    players.remove(p)
+                    players_copy.remove(p)
                 else:
                     p['stand'] = False
                     p['bust'] = False
-            play_blackjack_multi(players)
+            play_blackjack_multi(players_copy)
         elif answer == 'n':
             print("\nFinal score was:")
-            for p in players:
+            for p in players_copy:
                 print(f"{p['name']}: {p['cash']}")
             quit()
         else:
             print("\nInvalid input.")
-            play_again()
+            play_again(players_copy)
 
     def check_for_blackjack(player):
         player['score'] = calculate_score(convert_face_cards(player['hand']))
@@ -91,80 +89,88 @@ def play_blackjack_multi(players):
             player['score'] = -1
         return player
     
-    def compare_scores():
-        if all([p['stand'] for p in players]) == True:
+    def compare_scores(l):
+        players_copy = l[:]
+        if all([p['stand'] for p in players_copy]) == True:
             print('\nAll players stand.')
         highest_score = 0
         highest_scorers = []
-        for p in players:
+        for p in players_copy:
             p['score'] = calculate_score(convert_face_cards(p['hand']))
             if p['score'] > highest_score and p['bust'] == False and len(p['hand']) > 0:
                 highest_score = p['score']
-        for p in players:
+        for p in players_copy:
             if p['score'] == highest_score:
                 highest_scorers.append(p['name'])
         if len(highest_scorers) == 0:
             print("Nobody won this round. Pot split equally.")
-            for p in players:
+            for p in players_copy:
                 p['cash'] += bet
         if len(highest_scorers) == 1:
             print(f"\n{highest_scorers[0]} won with a score of {highest_score} and takes ${total}.")
-            for p in players:
+            for p in players_copy:
                 if p['name'] in highest_scorers:
                     p['cash'] += total
         else:
             print(f"\nDraw between {', '.join(highest_scorers)} with a score of {highest_score}.\nThey split the pot for a total of ${total / len(highest_scorers)} each.")
-            for p in players:
+            for p in players_copy:
                 if p['name'] in highest_scorers:
                     p['cash'] += total / len(highest_scorers)
-        for p in players:
+        for p in players_copy:
             if p['cash'] <= 0.0:
                 print(f"\n{p['name']} ran out of money and is out of the game.")
-                players.remove(p)
-        if len(players) < 2:
-            print(f"Game over. {players[0]['name']} won with a total of ${players[0]['cash']}.")
+                players_copy.remove(p)
+        if len(players_copy) < 2:
+            print(f"Game over. {players_copy[0]['name']} won with a total of ${players_copy[0]['cash']}.")
             quit()
         else:
-            play_again()
+            play_again(players_copy)
 
-    def set_bets():
-        print(f"\n{dealer} is the dealer.")
-        bet_amount = float(input(f"\n{dealer}, how much do you want to bet? $"))
-        while bet_amount > min([p['cash'] for p in players if p['cash'] > 0]):
-            print(f"Can't bet more than players have. Lowest amount is {min([p['cash']] for p in players)}")
-            bet_amount = float(input(f"\n{dealer}, how much do you want to bet?"))
-        for p in players:
-            if p['name'] == dealer:
-                continue
-            agree_to_bet = input(f"{p['name']}, do you agree to bet {bet_amount}? Y or N: ").lower()
-            while agree_to_bet not in ['y', 'n']:
-                agree_to_bet = input('Invalid input. Please enter Y or N: ').lower()
-            if agree_to_bet == 'n':
-                print(f"{p['name']} sits out this round.")
-                p['stand'] = True
-                p['score'] = -1
-        if len([p for p in players if len(p['hand']) < 2]) < 2:
-            print("Can't start the game if nobody agrees to the bet.")
-            set_bets()
+    def set_bets(l):
         total = 0
-        for p in players:
-            if p['stand'] == False:
-                p['cash'] -= bet_amount
-                total += bet_amount
-                for i in range(2):
-                    p['hand'].append(deal_card())
-        return [bet_amount, total]
+        players_copy = l[:]
+        print(f"\n{dealer} is the dealer.")
+        bet_amount = 0
+        while len([p for p in players_copy if len(p['hand']) >= 2]) < 2:
+            bet_amount = float(input(f"\n{dealer}, how much do you want to bet? $"))
+            while bet_amount > min([p['cash'] for p in players_copy if p['cash'] > 0]):
+                print(f"Can't bet more than players have. Lowest amount is {min([p['cash']] for p in players_copy)}")
+                bet_amount = float(input(f"\n{dealer}, how much do you want to bet?"))
+            for p in players_copy:
+                if p['name'] == dealer:
 
+                    continue
+                agree_to_bet = input(f"{p['name']}, do you agree to bet {bet_amount}? Y or N: ").lower()
+                while agree_to_bet not in ['y', 'n']:
+                    agree_to_bet = input('Invalid input. Please enter Y or N: ').lower()
+                if agree_to_bet == 'y':
+                    p['cash'] -= bet_amount
+                    total += bet_amount
+                elif agree_to_bet == 'n':
+                    print(f"{p['name']} sits out this round.")
+                    p['stand'] = True
+                    p['score'] = -1
+            print([p for p in players_copy if len(p['hand']) >= 2])
+            if len([p for p in players_copy if len(p['hand']) >= 2]) >= 2:
+                for p in players_copy:
+                    if p['stand'] == False:
+                        for i in range(2):
+                            p['hand'].append(deal_card())
+                break
+            else:
+                print("Can't start the game if no one agrees to the bet.")
+        return [bet_amount, total, players_copy]
+
+    dealer = random.choice(players)['name']
     for p in players:
         print(f"\n{p['name']} has a total of ${p['cash']}")
 
-    dealer = random.choice(players)['name']
-    [bet, total] = set_bets()
+    [bet, total, players] = set_bets(players)
 
     print(f"\nDealing cards...")
 
     while (all([p['stand'] for p in players]) == False) and len([p['bust'] for p in players if p['bust'] == False]) > 1:
-        display_score()
+        display_score(players)
         for p in players:
             if p['bust'] == False:
                 if p['stand'] == False and len(p['hand']) > 0:
@@ -187,4 +193,4 @@ def play_blackjack_multi(players):
                         print(f"{p['name']} stands.")
                         p['stand'] = True
     
-    compare_scores()
+    compare_scores(players)
